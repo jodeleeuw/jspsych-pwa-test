@@ -22,41 +22,97 @@
     </script>
   </head>
   <body>
-    <main style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;gap:16px;font-family:system-ui,Arial,sans-serif;">
+    <main
+      style="
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        gap: 16px;
+        font-family: system-ui, Arial, sans-serif;
+      "
+    >
       <h1>jspsych-pwa-test</h1>
-      <div style="display:flex;gap:12px;">
-        <button id="start-btn" style="padding:12px 20px;font-size:16px;">Start experiment</button>
-        <button id="admin-btn" style="padding:12px 20px;font-size:16px;">Manage data</button>
+      <div
+        id="app-controls"
+        style="
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 12px;
+        "
+      >
+        <div style="display: flex; gap: 12px">
+          <button id="start-btn" style="padding: 12px 20px; font-size: 16px">
+            Start experiment
+          </button>
+          <button id="admin-btn" style="padding: 12px 20px; font-size: 16px">
+            Manage data
+          </button>
+        </div>
+        <div style="color: #666; font-size: 14px">
+          Tip: install this app to your home screen for offline use.
+        </div>
       </div>
-      <div id="jspsych-target" style="width:100%;max-width:720px;margin-top:16px;display:none;"></div>
+      <div
+        id="jspsych-target"
+        style="width: 100%; max-width: 720px; margin-top: 16px; display: none"
+      ></div>
     </main>
 
     <script>
-      const startBtn = document.getElementById('start-btn');
-      const adminBtn = document.getElementById('admin-btn');
-      const jspsychTarget = document.getElementById('jspsych-target');
+      // Fullscreen styles for the experiment container
+      const style = document.createElement("style");
+      style.textContent = `
+        #jspsych-target.fullscreen {
+          position: fixed;
+          inset: 0;
+          width: 100vw;
+          height: 100vh;
+          max-width: none !important;
+          margin: 0 !important;
+          padding: 12px;
+          background: white;
+          z-index: 9999;
+          overflow: auto;
+        }
+        `;
+      document.head.appendChild(style);
+      const startBtn = document.getElementById("start-btn");
+      const adminBtn = document.getElementById("admin-btn");
+      const jspsychTarget = document.getElementById("jspsych-target");
+      const appTitle = document.querySelector("main > h1");
 
-      adminBtn.addEventListener('click', () => {
+      adminBtn.addEventListener("click", () => {
         // navigate to the admin page within the PWA
-        window.location.href = './admin/';
+        window.location.href = "./admin/";
       });
 
-      startBtn.addEventListener('click', () => {
-        // show the jspsych target and lazy-load experiment.js via regular script tag
-        jspsychTarget.style.display = 'block';
-        // Hide the main buttons while experiment runs
-        startBtn.disabled = true;
-        adminBtn.disabled = true;
+      startBtn.addEventListener("click", () => {
+        // hide the main controls and title, and show the jspsych target full-screen
+        const appControls = document.getElementById("app-controls");
+        appControls.style.display = "none";
+        if (appTitle) appTitle.style.display = "none";
+        jspsychTarget.style.display = "block";
+        jspsychTarget.classList.add("fullscreen");
 
         // Create and append a regular script tag to load experiment.js
-        const script = document.createElement('script');
-        script.src = 'experiment.js';
+        startBtn.disabled = true;
+        adminBtn.disabled = true;
+        const script = document.createElement("script");
+        script.src = "experiment.js";
         script.async = true;
         script.onload = () => {
           // experiment.js should initialize jsPsych and start automatically
         };
         script.onerror = (e) => {
-          console.error('Failed to load experiment.js', e);
+          console.error("Failed to load experiment.js", e);
+          // show controls again if loading fails
+          appControls.style.display = "flex";
+          if (appTitle) appTitle.style.display = "";
+          jspsychTarget.style.display = "none";
+          jspsychTarget.classList.remove("fullscreen");
           startBtn.disabled = false;
           adminBtn.disabled = false;
         };
