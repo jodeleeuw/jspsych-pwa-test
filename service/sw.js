@@ -24,10 +24,27 @@ const cdnUrlsToCache = [
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(async (cache) => {
-  // Cache local files. Resolve each relative URL against the service worker's scope
-  // so this works when the app is hosted in a subdirectory.
-  const resolvedLocalUrls = localUrlsToCache.map((u) => new URL(u, self.location).toString());
-  await cache.addAll(resolvedLocalUrls);
+      // Cache local files. Resolve each relative URL against the service worker's scope
+      // so this works when the app is hosted in a subdirectory.
+      const resolvedLocalUrls = localUrlsToCache.map((u) => new URL(u, self.location).toString());
+
+      // Instead of using cache.addAll (which rejects the entire install if any
+      // single request fails), fetch and cache each URL individually so we can
+      // log which ones fail and continue. This prevents the install from
+      // failing due to a single missing/404 resource (which produced the
+      // "Failed to execute 'addAll' on 'Cache': Request failed" error).
+      for (const url of resolvedLocalUrls) {
+        try {
+          const resp = await fetch(url, { cache: 'no-cache' });
+          if (!resp || !resp.ok) {
+            console.warn(`ServiceWorker: failed to fetch ${url} (status: ${resp && resp.status})`);
+            continue;
+          }
+          await cache.put(url, resp.clone());
+        } catch (err) {
+          console.warn(`ServiceWorker: error caching ${url}:`, err);
+        }
+      }
 
       // Cache CDN files (use try/catch to handle any failures gracefully)
       for (const url of cdnUrlsToCache) {
