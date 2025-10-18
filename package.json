@@ -1,0 +1,11 @@
+{
+  "name": "jspsych-pwa-test",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "npx http-server -p 5173 -c-1 --cors",
+    "serve": "npx http-server -p 5173 -c-1"
+  },
+  "description": "Offline jsPsych experiment using CDN imports (no build required)"
+}
