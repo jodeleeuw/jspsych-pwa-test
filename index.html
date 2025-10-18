@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Offline jsPsych experiment" />
     <meta name="theme-color" content="#000000" />
-    <link rel="manifest" href="/manifest.json" />
+  <link rel="manifest" href="manifest.json" />
     <title>jspsych-pwa-test</title>
     <link rel="stylesheet" href="https://unpkg.com/jspsych@8/css/jspsych.css" />
     <script src="https://unpkg.com/jspsych@8"></script>
@@ -15,12 +15,12 @@
     <script src="https://unpkg.com/@jspsych/offline-storage@0.4.0"></script>
     <script>
       if ("serviceWorker" in navigator) {
-        navigator.serviceWorker.register("/service/sw.js");
+        navigator.serviceWorker.register("service/sw.js");
       }
     </script>
   </head>
   <body>
     <div id="jspsych-target"></div>
-    <script src="/experiment.js"></script>
+  <script src="experiment.js"></script>
   </body>
 </html>

@@ -3,13 +3,13 @@ const CACHE_NAME = "jspsych-offline-v1";
 
 // Local files to cache
 const localUrlsToCache = [
-  "/",
-  "/index.html",
-  "/admin",
-  "/admin/index.html",
-  "/manifest.json",
-  "/experiment.js",
-  "/admin/admin.js",
+  "./",
+  "index.html",
+  "admin/",
+  "admin/index.html",
+  "manifest.json",
+  "experiment.js",
+  "admin/admin.js",
 ];
 
 // CDN URLs to pre-cache (these will be cached on install)
@@ -24,8 +24,10 @@ const cdnUrlsToCache = [
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(async (cache) => {
-      // Cache local files
-      await cache.addAll(localUrlsToCache);
+  // Cache local files. Resolve each relative URL against the service worker's scope
+  // so this works when the app is hosted in a subdirectory.
+  const resolvedLocalUrls = localUrlsToCache.map((u) => new URL(u, self.location).toString());
+  await cache.addAll(resolvedLocalUrls);
 
       // Cache CDN files (use try/catch to handle any failures gracefully)
       for (const url of cdnUrlsToCache) {
