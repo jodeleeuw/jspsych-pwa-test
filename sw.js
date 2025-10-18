@@ -26,7 +26,15 @@ self.addEventListener("install", (event) => {
     caches.open(CACHE_NAME).then(async (cache) => {
       // Cache local files. Resolve each relative URL against the service worker's scope
       // so this works when the app is hosted in a subdirectory.
-      const resolvedLocalUrls = localUrlsToCache.map((u) => new URL(u, self.location).toString());
+      // Prefer resolving relative URLs against the service worker registration
+      // scope (this is usually the site root when the worker is registered from
+      // the root page). Fall back to the worker script location if scope is
+      // unavailable. Resolving against `self.location` caused files to be
+      // looked up under `/service/` which produced the 404s you saw.
+      const baseForUrls = (self.registration && self.registration.scope)
+        ? self.registration.scope
+        : self.location.href;
+      const resolvedLocalUrls = localUrlsToCache.map((u) => new URL(u, baseForUrls).toString());
 
       // Instead of using cache.addAll (which rejects the entire install if any
       // single request fails), fetch and cache each URL individually so we can
