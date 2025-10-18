@@ -91,6 +91,15 @@ const debrief = {
     `;
   },
   choices: ['End Experiment'],
+  on_finish: () => {
+    // Redirect back to index so the user can restart or manage data
+    try {
+      window.location.href = './';
+    } catch (e) {
+      // If running in a worker-less environment or unusual embed, ignore
+      console.warn('Redirect to index failed', e);
+    }
+  },
 };
 
 // Assemble timeline and run
