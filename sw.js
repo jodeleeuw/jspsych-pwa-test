@@ -93,9 +93,23 @@ self.addEventListener("fetch", (event) => {
         // Clone the response
         const responseToCache = response.clone();
 
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseToCache);
-        });
+        // Only cache same-origin http(s) requests. Some browser extensions
+        // inject requests with other schemes (e.g. chrome-extension://) which
+        // cannot be put into the Cache and will throw. Skip those.
+        try {
+          const reqUrl = new URL(event.request.url);
+          if (reqUrl.protocol === 'http:' || reqUrl.protocol === 'https:') {
+            if (reqUrl.origin === self.location.origin) {
+              caches.open(CACHE_NAME).then((cache) => {
+                cache.put(event.request, responseToCache).catch((err) => {
+                  console.warn('ServiceWorker: cache.put failed', err, event.request.url);
+                });
+              });
+            }
+          }
+        } catch (err) {
+          console.warn('ServiceWorker: skipping caching for request', event.request.url, err);
+        }
 
         return response;
       });
