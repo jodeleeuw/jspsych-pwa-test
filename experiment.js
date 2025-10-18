@@ -17,13 +17,13 @@ const shapesMaster = [
 
 // Instructions (touch-friendly)
 const welcome = {
-  type: jsPsychHtmlKeyboardResponse,
+  type: jsPsychHtmlButtonResponse,
   stimulus: `
     <h1>Find the circle</h1>
     <p>On each trial you'll see four shapes. One of them is a circle.</p>
     <p>Your task is to TAP the circle as quickly and accurately as possible.</p>
-    <p>Press any key to begin.</p>
   `,
+  choices: ['Start']
 };
 
 // Generate trials: shuffle positions each trial, keep exactly one circle
@@ -88,9 +88,9 @@ const debrief = {
       <h2>Finished</h2>
       <p>Accuracy: <strong>${accuracy}%</strong></p>
       <p>Average RT (for responded trials): <strong>${meanRt} ms</strong></p>
-      <p>Press any key to complete the experiment.</p>
     `;
-  }
+  },
+  choices: ['End Experiment'],
 };
 
 // Assemble timeline and run
