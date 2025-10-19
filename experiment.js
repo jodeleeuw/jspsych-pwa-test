@@ -78,7 +78,7 @@ for (let i = 0; i < numTrials; i++) {
 
 // Debrief / summary
 const debrief = {
-  type: jsPsychHtmlKeyboardResponse,
+  type: jsPsychHtmlButtonResponse,
   stimulus: () => {
     const trialsData = jsPsych.data.get().filter({ task: 'shape_choice' });
     const valid = trialsData.filter(trial => trial.response !== -1);
