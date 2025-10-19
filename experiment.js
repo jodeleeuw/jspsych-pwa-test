@@ -1,5 +1,7 @@
 // Initialize jsPsych with offline storage (existing project provides jsPsychOfflineStorage)
-const jsPsych = jsPsychOfflineStorage ? jsPsychOfflineStorage.initJsPsychOffline() : initJsPsych();
+const jsPsych = jsPsychOfflineStorage.initJsPsychOffline({
+  display_element: 'jspsych-target'
+})
 
 // --- Helper: shape HTML generators ---
 const shapeSize = 80;
