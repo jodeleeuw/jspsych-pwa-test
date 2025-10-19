@@ -89,35 +89,61 @@
         window.location.href = "./admin/";
       });
 
-      startBtn.addEventListener("click", () => {
-        // hide the main controls and title, and show the jspsych target full-screen
-        const appControls = document.getElementById("app-controls");
-        appControls.style.display = "none";
-        if (appTitle) appTitle.style.display = "none";
-        jspsychTarget.style.display = "block";
-        jspsychTarget.classList.add("fullscreen");
+        // Keep references for restoring the DOM if loading fails
+        let _originalParent = null;
+        let _originalNextSibling = null;
 
-        // Create and append a regular script tag to load experiment.js
-        startBtn.disabled = true;
-        adminBtn.disabled = true;
-        const script = document.createElement("script");
-        script.src = "experiment.js";
-        script.async = true;
-        script.onload = () => {
-          // experiment.js should initialize jsPsych and start automatically
-        };
-        script.onerror = (e) => {
-          console.error("Failed to load experiment.js", e);
-          // show controls again if loading fails
-          appControls.style.display = "flex";
-          if (appTitle) appTitle.style.display = "";
-          jspsychTarget.style.display = "none";
-          jspsychTarget.classList.remove("fullscreen");
-          startBtn.disabled = false;
-          adminBtn.disabled = false;
-        };
-        document.body.appendChild(script);
-      });
+        startBtn.addEventListener('click', () => {
+          // hide the main controls and title, and move the jspsych target
+          const appControls = document.getElementById('app-controls');
+          const mainEl = document.querySelector('main');
+
+          // store original location so we can restore on error
+          _originalParent = jspsychTarget.parentNode;
+          _originalNextSibling = jspsychTarget.nextSibling;
+
+          // move jspsych target to body so hiding <main> won't hide it
+          document.body.appendChild(jspsychTarget);
+
+          // hide the main element entirely so it doesn't take up space
+          if (mainEl) mainEl.style.display = 'none';
+
+          // show the jspsych target full-screen
+          jspsychTarget.style.display = 'block';
+          jspsychTarget.classList.add('fullscreen');
+
+          // Create and append a regular script tag to load experiment.js
+          startBtn.disabled = true;
+          adminBtn.disabled = true;
+          const script = document.createElement('script');
+          script.src = 'experiment.js';
+          script.async = true;
+          script.onload = () => {
+            // experiment.js should initialize jsPsych and start automatically
+          };
+          script.onerror = (e) => {
+            console.error('Failed to load experiment.js', e);
+            // restore main and controls if loading fails
+            if (mainEl) mainEl.style.display = '';
+            appControls.style.display = 'flex';
+            if (appTitle) appTitle.style.display = '';
+            jspsychTarget.style.display = 'none';
+            jspsychTarget.classList.remove('fullscreen');
+
+            // move jspsychTarget back to its original location
+            if (_originalParent) {
+              if (_originalNextSibling) {
+                _originalParent.insertBefore(jspsychTarget, _originalNextSibling);
+              } else {
+                _originalParent.appendChild(jspsychTarget);
+              }
+            }
+
+            startBtn.disabled = false;
+            adminBtn.disabled = false;
+          };
+          document.body.appendChild(script);
+        });
     </script>
   </body>
 </html>
