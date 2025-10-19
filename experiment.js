@@ -39,11 +39,10 @@ for (let i = 0; i < numTrials; i++) {
 
   const trial = {
     type: jsPsychHtmlButtonResponse,
-    // note: stimulus is decorative here; buttons themselves are rendered by the plugin
-    stimulus: '<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;justify-items:center;align-items:center;padding:10px;"></div>',
-    // jsPsychHtmlButtonResponse will insert each choice HTML into the button template
+    stimulus: '',
     choices: choicesHtml,
-    // modern jsPsych accepts a function for button_html(choice) -> html
+    button_layout: 'grid',
+    grid_rows: 2,
     button_html: function(choice) {
       return `<button class="jspsych-btn" style="width:140px;height:140px;border:none;background:transparent;padding:0">${choice}</button>`;
     },
@@ -53,10 +52,7 @@ for (let i = 0; i < numTrials; i++) {
     },
     trial_duration: 3000,
     on_finish: (data) => {
-      // data.response is the button index (0-based) or null if timed out
       data.correct = data.response !== null && data.response === data.correct_index;
-      // normalize response to -1 when no response for easier later analysis
-      if (data.response === null) data.response = -1;
     }
   };
 
@@ -72,7 +68,7 @@ for (let i = 0; i < numTrials; i++) {
       return last.correct ? '<div style="font-size:24px;color:green;">Correct</div>' : '<div style="font-size:24px;color:red;">Incorrect</div>';
     },
     choices: 'NO_KEYS',
-    trial_duration: 600,
+    trial_duration: 400,
   });
 }
 
