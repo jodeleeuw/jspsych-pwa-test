@@ -1,6 +1,10 @@
 // Initialize jsPsych with offline storage
 const jsPsych = jsPsychOfflineStorage.initJsPsychOffline({
   display_element: "jspsych-target",
+  on_finish: () => {
+    // return to the index page when finished
+    window.location.href = "./";
+  },
 });
 
 // Preload any assets
@@ -49,7 +53,7 @@ const testTrial = {
   choices: ["A", "B"],
   data: {
     task: "response",
-    correct_response: jsPsych.evaluateTimelineVariable("correct_response"),
+    correct_response: jsPsych.timelineVariable("correct_response"),
   },
   on_finish: (data) => {
     data.correct = data.response === data.correct_response;
