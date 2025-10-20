@@ -1,106 +1,91 @@
-// Initialize jsPsych with offline storage (existing project provides jsPsychOfflineStorage)
+// Initialize jsPsych with offline storage
 const jsPsych = jsPsychOfflineStorage.initJsPsychOffline({
-  display_element: 'jspsych-target'
-})
+  display_element: "jspsych-target",
+});
 
-// --- Helper: shape HTML generators ---
-const shapeSize = 80;
-const circleHtml = `<div style="width:${shapeSize}px;height:${shapeSize}px;border-radius:50%;background:#333;margin:0 auto;"></div>`;
-const squareHtml = `<div style="width:${shapeSize}px;height:${shapeSize}px;background:#333;margin:0 auto;"></div>`;
-const triangleHtml = `<div style="width:0;height:0;border-left:${shapeSize/2}px solid transparent;border-right:${shapeSize/2}px solid transparent;border-bottom:${shapeSize}px solid #333;margin:0 auto;"></div>`;
-const diamondHtml = `<div style="width:${shapeSize}px;height:${shapeSize}px;background:#333;transform:rotate(45deg);margin:0 auto;"></div>`;
+// Preload any assets
+const preloadTrial = {
+  type: jsPsychPreload,
+  images: [],
+};
 
-const shapesMaster = [
-  { id: 'circle', html: circleHtml },
-  { id: 'square', html: squareHtml },
-  { id: 'triangle', html: triangleHtml },
-  { id: 'diamond', html: diamondHtml },
-];
-
-// Instructions (touch-friendly)
+// Welcome screen
 const welcome = {
   type: jsPsychHtmlButtonResponse,
   stimulus: `
-    <h1>Find the circle</h1>
-    <p>On each trial you'll see four shapes. One of them is a circle.</p>
-    <p>Your task is to TAP the circle as quickly and accurately as possible.</p>
+    <h1>Welcome to the experiment!</h1>
+    <p>This is an offline jsPsych experiment that saves data locally on your device.</p>
+    <p>Press the button below to begin.</p>
   `,
-  choices: ['Start']
+  choices: ["Continue"],
 };
 
-// Generate trials: shuffle positions each trial, keep exactly one circle
-const numTrials = 6;
-const trials = [];
-for (let i = 0; i < numTrials; i++) {
-  // create a shallow copy and shuffle
-  const shuffled = jsPsych.randomization.shuffle(shapesMaster.slice());
-  const choicesHtml = shuffled.map(s => s.html);
-  const correctIndex = shuffled.findIndex(s => s.id === 'circle');
+// Instructions
+const instructions = {
+  type: jsPsychHtmlButtonResponse,
+  stimulus: `
+    <h2>Instructions</h2>
+    <p>You will be presented with a series of stimuli.</p>
+    <p>Press <strong>A</strong> if you see the letter A.</p>
+    <p>Press <strong>B</strong> if you see the letter B.</p>
+    <p>Try to respond as quickly and accurately as possible.</p>
+  `,
+  choices: ["Start"],
+};
 
-  const trial = {
-    type: jsPsychHtmlButtonResponse,
-    stimulus: '',
-    choices: choicesHtml,
-    button_layout: 'grid',
-    grid_rows: 2,
-    button_html: function(choice) {
-      return `<button class="jspsych-btn" style="width:140px;height:140px;border:none;background:transparent;padding:0">${choice}</button>`;
-    },
-    data: {
-      task: 'shape_choice',
-      correct_index: correctIndex,
-    },
-    trial_duration: 3000,
-    on_finish: (data) => {
-      data.correct = data.response !== null && data.response === data.correct_index;
-    }
-  };
+// Test trials
+const testStimuli = [
+  { stimulus: "A", correct_response: 0 },
+  { stimulus: "B", correct_response: 1 },
+  { stimulus: "A", correct_response: 0 },
+  { stimulus: "B", correct_response: 1 },
+];
 
-  trials.push(trial);
+const testTrial = {
+  type: jsPsychHtmlButtonResponse,
+  stimulus: () => {
+    return `<div style="font-size: 60px;">${jsPsych.evaluateTimelineVariable("stimulus")}</div>`;
+  },
+  choices: ["A", "B"],
+  data: {
+    task: "response",
+    correct_response: jsPsych.evaluateTimelineVariable("correct_response"),
+  },
+  on_finish: (data) => {
+    data.correct = data.response === data.correct_response;
+  },
+};
 
-  // brief feedback after each trial
-  trials.push({
-    type: jsPsychHtmlKeyboardResponse,
-    stimulus: function() {
-      const last = jsPsych.data.get().last(1).values()[0];
-      if (!last) return '';
-      if (last.response === -1) return '<div style="font-size:24px;">No response recorded</div>';
-      return last.correct ? '<div style="font-size:24px;color:green;">Correct</div>' : '<div style="font-size:24px;color:red;">Incorrect</div>';
-    },
-    choices: 'NO_KEYS',
-    trial_duration: 400,
-  });
-}
+const testProcedure = {
+  timeline: [testTrial],
+  timeline_variables: testStimuli,
+  randomize_order: true,
+};
 
-// Debrief / summary
+// Debrief
 const debrief = {
   type: jsPsychHtmlButtonResponse,
   stimulus: () => {
-    const trialsData = jsPsych.data.get().filter({ task: 'shape_choice' });
-    const valid = trialsData.filter(trial => trial.response !== -1);
-    const correct = trialsData.filter({ correct: true });
-    const accuracy = trialsData.count() > 0 ? Math.round((correct.count() / trialsData.count()) * 100) : 0;
-    const meanRt = valid.count() > 0 ? Math.round(valid.select('rt').mean()) : 'N/A';
+    const trials = jsPsych.data.get().filter({ task: "response" });
+    const correct_trials = trials.filter({ correct: true });
+
+    // Guard against zero-count
+    const trialCount = trials.count();
+    const accuracy = trialCount > 0 ? Math.round((correct_trials.count() / trialCount) * 100) : 0;
+    const rt = correct_trials.count() > 0 ? Math.round(correct_trials.select("rt").mean()) : 0;
 
     return `
-      <h2>Finished</h2>
-      <p>Accuracy: <strong>${accuracy}%</strong></p>
-      <p>Average RT (for responded trials): <strong>${meanRt} ms</strong></p>
+      <h2>You're done!</h2>
+      <p>Your accuracy: <strong>${accuracy}%</strong></p>
+      <p>Your average response time: <strong>${rt}ms</strong></p>
+      <p>Press the button below to complete the experiment.</p>
     `;
   },
-  choices: ['End Experiment'],
-  on_finish: () => {
-    // Redirect back to index so the user can restart or manage data
-    try {
-      window.location.href = './';
-    } catch (e) {
-      // If running in a worker-less environment or unusual embed, ignore
-      console.warn('Redirect to index failed', e);
-    }
-  },
+  choices: ["Finish"],
 };
 
-// Assemble timeline and run
-const timeline = [welcome].concat(trials, [debrief]);
+// Create timeline
+const timeline = [preloadTrial, welcome, instructions, testProcedure, debrief];
 
+// Run experiment
 jsPsych.run(timeline);

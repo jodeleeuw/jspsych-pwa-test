@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -10,92 +10,79 @@
     <link rel="stylesheet" href="https://unpkg.com/jspsych@8/css/jspsych.css" />
     <script src="https://unpkg.com/jspsych@8"></script>
     <script src="https://unpkg.com/@jspsych/plugin-html-button-response@2"></script>
-    <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@2"></script>
     <script src="https://unpkg.com/@jspsych/plugin-preload@2"></script>
     <script src="https://unpkg.com/@jspsych/offline-storage@0.4.0"></script>
     <script>
       if ("serviceWorker" in navigator) {
-        navigator.serviceWorker
-          .register("sw.js", { scope: "./" })
-          .catch((e) => console.warn("SW registration failed", e));
+        navigator.serviceWorker.register("sw.js", { scope: "./" });
       }
     </script>
-  </head>
-  <body>
-    <main
-      style="
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        margin: 0;
+        padding: 0;
+        background: #f5f5f5;
+      }
+      #main-controls {
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        height: 100vh;
-        gap: 16px;
-        font-family: system-ui, Arial, sans-serif;
-      "
-    >
+        min-height: 100vh;
+        padding: 20px;
+      }
+      #main-controls h1 {
+        color: #2c3e50;
+        margin-bottom: 10px;
+      }
+      #main-controls p {
+        color: #7f8c8d;
+        margin-bottom: 30px;
+        text-align: center;
+        max-width: 500px;
+      }
+      button {
+        background: #3498db;
+        color: white;
+        border: none;
+        padding: 15px 30px;
+        font-size: 18px;
+        border-radius: 5px;
+        cursor: pointer;
+        margin: 10px;
+      }
+      button:hover {
+        background: #2980b9;
+      }
+      button.secondary {
+        background: #95a5a6;
+      }
+      button.secondary:hover {
+        background: #7f8c8d;
+      }
+      #jspsych-target {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="main-controls">
       <h1>jspsych-pwa-test</h1>
-      <div
-        id="app-controls"
-        style="
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 12px;
-        "
-      >
-        <div style="display: flex; gap: 12px">
-          <button id="start-btn" style="padding: 12px 20px; font-size: 16px">
-            Start experiment
-          </button>
-          <button id="admin-btn" style="padding: 12px 20px; font-size: 16px">
-            Manage data
-          </button>
-        </div>
-        <div style="color: #666; font-size: 14px">
-          Tip: install this app to your home screen for offline use.
-        </div>
-      </div>
-    </main>
-    <div
-      id="jspsych-target"
-      style="width: 100vw; height: 100vh; display: none"
-    ></div>
+      <p>This is an offline jsPsych experiment that saves data locally on your device.</p>
+      <button onclick="startExperiment()">Start Experiment</button>
+      <button class="secondary" onclick="window.location.href='admin/'">View Data (Admin)</button>
+    </div>
+    <div id="jspsych-target" style="width:100vw; height:100vh; display:none;"></div>
     <script>
-      const startBtn = document.getElementById("start-btn");
-      const adminBtn = document.getElementById("admin-btn");
-      const jspsychTarget = document.getElementById("jspsych-target");
-      const appTitle = document.querySelector("main > h1");
-
-      adminBtn.addEventListener("click", () => {
-        // navigate to the admin page within the PWA
-        window.location.href = "./admin/";
-      });
-
-      startBtn.addEventListener("click", () => {
-        // hide the main controls and title, and move the jspsych target
-        const mainEl = document.querySelector("main");
-
-        // hide the main element entirely so it doesn't take up space
-        if (mainEl) mainEl.style.display = "none";
-
-        // show the jspsych target full-screen
-        jspsychTarget.style.removeProperty("display");
-
-        // Create and append a regular script tag to load experiment.js
-        const script = document.createElement("script");
-        script.src = "experiment.js";
-        script.async = true;
-        script.onload = () => {
-          // experiment.js should initialize jsPsych and start automatically
-        };
-        script.onerror = (e) => {
-          console.error("Failed to load experiment.js", e);
-          // restore main and controls if loading fails
-
-          jspsychTarget.style.display = "none";
-        };
+      function startExperiment() {
+        document.getElementById('main-controls').style.display = 'none';
+        document.getElementById('jspsych-target').style.display = '';
+        
+        const script = document.createElement('script');
+        script.src = 'experiment.js';
         document.body.appendChild(script);
-      });
+      }
     </script>
   </body>
 </html>

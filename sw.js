@@ -1,22 +1,21 @@
 // Service Worker for offline PWA functionality
 const CACHE_NAME = "jspsych-offline-v1";
 
-// Local files to cache
+// Local files to cache (relative paths)
 const localUrlsToCache = [
   "./",
-  "index.html",
-  "admin/",
-  "admin/index.html",
-  "manifest.json",
-  "experiment.js",
-  "admin/admin.js",
+  "./index.html",
+  "./admin/",
+  "./admin/index.html",
+  "./manifest.json",
+  "./experiment.js",
+  "./admin/admin.js",
 ];
 
 // CDN URLs to pre-cache (these will be cached on install)
 const cdnUrlsToCache = [
   "https://unpkg.com/jspsych@8",
   "https://unpkg.com/@jspsych/plugin-html-button-response@2",
-  "https://unpkg.com/@jspsych/plugin-html-keyboard-response@2",
   "https://unpkg.com/@jspsych/plugin-preload@2",
   "https://unpkg.com/@jspsych/offline-storage@0.4.0",
 ];
@@ -24,42 +23,32 @@ const cdnUrlsToCache = [
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(async (cache) => {
-      // Cache local files. Resolve each relative URL against the service worker's scope
-      // so this works when the app is hosted in a subdirectory.
-      // Prefer resolving relative URLs against the service worker registration
-      // scope (this is usually the site root when the worker is registered from
-      // the root page). Fall back to the worker script location if scope is
-      // unavailable. Resolving against `self.location` caused files to be
-      // looked up under `/service/` which produced the 404s you saw.
-      const baseForUrls = (self.registration && self.registration.scope)
-        ? self.registration.scope
-        : self.location.href;
-      const resolvedLocalUrls = localUrlsToCache.map((u) => new URL(u, baseForUrls).toString());
+      // Get base URL for resolving relative paths
+      const baseForUrls =
+        self.registration && self.registration.scope ? self.registration.scope : self.location.href;
 
-      // Instead of using cache.addAll (which rejects the entire install if any
-      // single request fails), fetch and cache each URL individually so we can
-      // log which ones fail and continue. This prevents the install from
-      // failing due to a single missing/404 resource (which produced the
-      // "Failed to execute 'addAll' on 'Cache': Request failed" error).
-      for (const url of resolvedLocalUrls) {
+      // Cache local files individually with try/catch
+      for (const urlPath of localUrlsToCache) {
         try {
-          const resp = await fetch(url, { cache: 'no-cache' });
-          if (!resp || !resp.ok) {
-            console.warn(`ServiceWorker: failed to fetch ${url} (status: ${resp && resp.status})`);
-            continue;
+          const url = new URL(urlPath, baseForUrls);
+          const response = await fetch(url);
+          if (response.ok) {
+            await cache.put(url, response.clone());
           }
-          await cache.put(url, resp.clone());
-        } catch (err) {
-          console.warn(`ServiceWorker: error caching ${url}:`, err);
+        } catch (error) {
+          console.warn(`Failed to cache local file ${urlPath}:`, error);
         }
       }
 
       // Cache CDN files (use try/catch to handle any failures gracefully)
       for (const url of cdnUrlsToCache) {
         try {
-          await cache.add(url);
+          const response = await fetch(url);
+          if (response.ok) {
+            await cache.put(url, response.clone());
+          }
         } catch (error) {
-          console.warn(`Failed to cache ${url}:`, error);
+          console.warn(`Failed to cache CDN ${url}:`, error);
         }
       }
     }),
@@ -85,31 +74,30 @@ self.addEventListener("fetch", (event) => {
           return response;
         }
 
-        // Don't cache non-GET requests
+        // Only cache same-origin GET requests with http(s) protocol
         if (event.request.method !== "GET") {
+          return response;
+        }
+
+        // Guard against invalid URL parsing (some requests may have non-http schemes)
+        try {
+          const requestUrl = new URL(event.request.url);
+          const isHttpScheme = requestUrl.protocol === "http:" || requestUrl.protocol === "https:";
+
+          if (!isHttpScheme) {
+            return response;
+          }
+        } catch (error) {
+          // Invalid URL, don't cache
           return response;
         }
 
         // Clone the response
         const responseToCache = response.clone();
 
-        // Only cache same-origin http(s) requests. Some browser extensions
-        // inject requests with other schemes (e.g. chrome-extension://) which
-        // cannot be put into the Cache and will throw. Skip those.
-        try {
-          const reqUrl = new URL(event.request.url);
-          if (reqUrl.protocol === 'http:' || reqUrl.protocol === 'https:') {
-            if (reqUrl.origin === self.location.origin) {
-              caches.open(CACHE_NAME).then((cache) => {
-                cache.put(event.request, responseToCache).catch((err) => {
-                  console.warn('ServiceWorker: cache.put failed', err, event.request.url);
-                });
-              });
-            }
-          }
-        } catch (err) {
-          console.warn('ServiceWorker: skipping caching for request', event.request.url, err);
-        }
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(event.request, responseToCache);
+        });
 
         return response;
       });

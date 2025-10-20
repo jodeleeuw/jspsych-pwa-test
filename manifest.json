@@ -3,7 +3,6 @@
   "short_name": "jspsych-pwa-test",
   "description": "Offline jsPsych experiment",
   "start_url": "./",
-  "scope": "./",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#000000",

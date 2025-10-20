@@ -29,7 +29,8 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 - \`admin/\` - Data manager interface (accessible at \`/admin\`)
   - \`index.html\` - Data manager page
   - \`admin.js\` - Data manager logic
- - \`sw.js\` - Service worker (at project root)
+- \`service/\` - Service worker for offline functionality
+  - \`sw.js\` - Service worker
 
 ## Deployment
 
@@ -114,7 +115,7 @@ Add CDN imports at the top of \`experiment.js\`:
 import imageKeyboardResponse from "https://unpkg.com/@jspsych/plugin-image-keyboard-response@2";
 \`\`\`
 
-**Important**: After adding new CDN imports, update \`sw.js\` at the project root to include the new URLs in the \`cdnUrlsToCache\` array for offline caching.
+**Important**: After adding new CDN imports, update \`service/sw.js\` to include the new URLs in \`cdnUrlsToCache\` array for offline caching.
 
 ## Learn More
 
